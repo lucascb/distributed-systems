@@ -28,6 +28,10 @@ public class File {
         this.data += s;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public String getData() {
         return this.data;
     }
@@ -44,16 +48,31 @@ public class File {
         return this.version;
     }
 
-    public File getFile(String filename) {
-        if (this.name.equals(filename)) {
-            return this;
-        }
-        File r;
+    public File getChild(String childname) {
         for (File f : this.child) {
-            if ((r = f.getFile(filename)) != null) {
-                return r;
+            if (f.getName().equals(childname)) {
+                return f;
             }
         }
-        return null;
+        return null; // Nao encontrou
+    }
+
+    public boolean hasChild() {
+        return this.child.size() != 0;
+    }
+
+    public boolean removeChild(String childname) {
+        for (File f : this.child) {
+            if (f.getName().equals(childname)) {
+                if (!f.hasChild()) {
+                    this.child.remove(f);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 }
