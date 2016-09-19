@@ -26,7 +26,7 @@ public class FileTree {
         }
         String[] paths = filepath.substring(1).split("/");
         String filename = paths[paths.length-1];
-        System.out.println(filename);
+        //System.out.println(filename);
         File current = this.root;
         for (int i = 0; i < paths.length-1; i++) {
             if ((current = current.getChild(paths[i])) == null) {
@@ -45,7 +45,7 @@ public class FileTree {
         }
         String[] paths = filepath.substring(1).split("/");
         String filename = paths[paths.length-1];
-        System.out.println(filename);
+        //System.out.println(filename);
         File current = this.root;
         for (int i = 0; i < paths.length-1; i++) {
             if ((current = current.getChild(paths[i])) == null) {

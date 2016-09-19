@@ -14,7 +14,7 @@ public class File {
         this.data = "";
         this.creationTime = String.valueOf(Instant.now().toEpochMilli());
         this.modificationTime = this.creationTime;
-        this.version = 0;
+        this.version = -1;
         this.child = new ArrayList<File>();
     }
 
@@ -25,7 +25,7 @@ public class File {
     public void addData(String s) {
         this.modificationTime = String.valueOf(Instant.now().toEpochMilli());
         this.version++;
-        this.data += s;
+        this.data += ('\n' + s);
     }
 
     public String getName() {
