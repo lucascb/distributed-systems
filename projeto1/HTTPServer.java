@@ -113,10 +113,12 @@ public class HTTPServer {
                     clientOut.println(response);
                 }
                 else {
-                    //String response = "HTTP/1.1 409 Conflict" + "\nVersion: " +
-                    //    f.getVersion() + "\nCreation: " + f.getCreationTime() +
-                    //        "\nModification: " + f.getModificationTime() + '\n';
-                    clientOut.println("HTTP/1.1 409 Conflict");
+                    f = ft.getFile(path);
+                    String response = "HTTP/1.1 409 Conflict" + "\nVersion: " +
+                        f.getVersion() + "\nCreation: " + f.getCreationTime() +
+                            "\nModification: " + f.getModificationTime() + '\n';
+                    //clientOut.println("HTTP/1.1 409 Conflict");
+                    clientOut.println(response);
                 }
             }
             else if (requestType.equals("DELETE")) {
