@@ -48,7 +48,7 @@ public class HTTPServer {
             // Caso o tipo da requisicao seja PUT ou POST, le o corpo
             String data = "";
             if (requestType.equals("PUT") || requestType.equals("POST")) {
-                String length = (String) parameters.get("Content-Length:");
+                String length = parameters.get("Content-Length:");
                 int bodySize = Integer.parseInt(length);
                 //System.err.println(bodySize);
                 StringBuilder dataBuffer = new StringBuilder();
