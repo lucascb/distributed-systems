@@ -9,6 +9,7 @@ public class File {
     private int version;
     private ArrayList<File> child;
     private File predecessor;
+    private boolean locked;
 
     public File(String name, String data) {
         this.name = name;
@@ -18,6 +19,7 @@ public class File {
         this.version = 0;
         this.child = new ArrayList<File>();
         this.predecessor = null;
+        this.locked = false;
     }
 
     public boolean addChild(File f) {
@@ -26,9 +28,13 @@ public class File {
 
 
     public void addData(String s) {
-        this.modificationTime = String.valueOf(Instant.now().toEpochMilli());
-        this.version++;
-        this.data += ('\n' + s);
+        if (!this.locked) {
+            this.locked = true;
+            this.modificationTime = String.valueOf(Instant.now().toEpochMilli());
+            this.version++;
+            this.data = (s + '\n');
+            this.locked = false;
+        }
     }
 
     public void setPredecessor(File f) {

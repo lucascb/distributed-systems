@@ -58,6 +58,7 @@ public class Request implements Runnable {
                     dataBuffer.append(charReceived);
                 }
                 data = dataBuffer.toString();
+                //System.out.println("Recebido: " + data);
             }
             if (requestType.equals("GET")) {
                 System.err.println("GET request received");
