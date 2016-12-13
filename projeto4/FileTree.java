@@ -29,7 +29,7 @@ public class FileTree {
                 return null;
             }
         }
-        File f = new File(filename, data);
+        File f = new File(filepath, data);
         this.ft.put(filepath, f);
         currentFile.addChild(f);
         f.setPredecessor(currentFile);
