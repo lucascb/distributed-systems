@@ -177,81 +177,126 @@ public class ServerThrift implements Server.Iface {
         return retorno;
     }
 
-    public boolean ADD(String path, String data) throws
+    public boolean ADD(int senderName, String path, String data) throws
     org.apache.thrift.TException {
         int hash = Math.abs(path.hashCode()) % this.numServers;
         boolean retorno = false;
+        TTransport transport;
+        TProtocol protocol;
+        Server.Client client;
 
         if (hash == this.serverName) {
-            System.out.println("ADD "+ path + " accepted on server " + this.serverName);
+            System.out.println("ADD "+ path + " accepted on server " + this.serverName
+            + " received from " + senderName);
             // Checks if the entire path exists
             // E.g. if /a/b/c will be added, then /a and /a/b must exist
             String[] files = path.substring(1).split("/");
             String filepath = "";
-            for (int i = 0; i < files.length - 1; i++) {
+            for (String f : files) {
                 // Build the path and send a message to the responsible server
-                filepath += ("/" + files[i]);
+                filepath += ("/" + f);
                 //System.out.println(filepath);
                 hash = Math.abs(filepath.hashCode()) % this.numServers;
                 if (hash == this.serverName) {
-                    if (getFile(filepath) == null) {
-                        return addFile(filepath, "") != null;
-                    }
+                    System.out.println("ADD " + filepath + " created on itself");
+                    addFile(filepath, "");
                 }
-                else {
-                    System.out.println("GET " + filepath + " sent to server " + hash);
-                    TTransport transport = new TSocket("127.0.0.1", servers.get(hash));
+                else if (-1 == senderName) {
+                    System.out.println("ADD " + filepath + " sent to server " + hash);
+                    transport = new TSocket("127.0.0.1", servers.get(hash));
                     transport.open();
-                    TProtocol protocol = new TBinaryProtocol(transport);
-                    Server.Client client = new Server.Client(protocol);
+                    protocol = new TBinaryProtocol(transport);
+                    client = new Server.Client(protocol);
                     // If the parent path doesn't exist then the file can't be added
-                    if (client.GET(filepath).equals("FILE NOT FOUND\n")) {
-                        client.ADD(filepath, "");
-                        transport.close();
-                        return true;
-                    }
+                    client.ADD(this.serverName, filepath, "");
                     transport.close();
                 }
             }
-            return addFile(path, data) != null;
+            return true;
         }
         else {
             // If the server is not the responsible then send to the correct one
             String[] files = path.substring(1).split("/");
             String filepath = "";
-            for (int i = 0; i < files.length - 1; i++) {
-                filepath += ("/" + files[i]);
+            for (String f : files) {
+                filepath += ("/" + f);
                 hash = Math.abs(filepath.hashCode()) % this.numServers;
                 if (hash == this.serverName) {
-                    if (getFile(filepath) == null) {
-                        return addFile(filepath, "") != null;
-                    }
+                    System.out.println("ADD " + filepath + " created on itself");
+                    addFile(filepath, "");
                 }
-                else {
-                    System.out.println("GET " + filepath + " sent to server "+ hash);
-                    TTransport transport = new TSocket("127.0.0.1", servers.get(hash));
+                else if (hash != senderName) {
+                    System.out.println("ADD " + filepath + " sent to server " + hash);
+                    transport = new TSocket("127.0.0.1", servers.get(hash));
                     transport.open();
-                    TProtocol protocol = new TBinaryProtocol(transport);
-                    Server.Client client = new Server.Client(protocol);
-                    if (client.GET(filepath).equals("FILE NOT FOUND\n")) {
-                        client.ADD(filepath, "");
-                        transport.close();
-                        return true;
-                    }
+                    protocol = new TBinaryProtocol(transport);
+                    client = new Server.Client(protocol);
+                    // If the parent path doesn't exist then the file can't be added
+                    client.ADD(this.serverName, filepath, "");
                     transport.close();
                 }
             }
-            System.out.println("ADD " + path + " sent to server " + hash);
-            try {
-                TTransport transport = new TSocket("127.0.0.1", servers.get(hash));
-                transport.open();
-                TProtocol protocol = new TBinaryProtocol(transport);
-                Server.Client client = new Server.Client(protocol);
+        }
 
-                retorno = client.ADD(path, data);
+        for (int i = 0; i < numServers; i++){
+            if (i != serverName){
+                transport = new TSocket("127.0.0.1", servers.get(i));
+                transport.open();
+                protocol = new TBinaryProtocol(transport);
+                client = new Server.Client(protocol);
+
+                if(!client.CAN_COMMIT()) {
+                    transport.close();
+                    for (int j = 0; j < numServers; j++){
+                        if (j != serverName){
+                            transport = new TSocket("127.0.0.1", servers.get(j));
+                            transport.open();
+                            protocol = new TBinaryProtocol(transport);
+                            client = new Server.Client(protocol);
+
+                            client.ABORT();
+                            transport.close();
+                        }
+                        else {
+                            this.ft.abort();
+                        }
+                    }
+                    return false;
+                }
                 transport.close();
-            } catch (TException x) {
-                x.printStackTrace();
+            }
+            else if (!this.ft.canCommit()) {
+                for(int j = 0; j < numServers; j++) {
+                    if (j != serverName) {
+                        transport = new TSocket("127.0.0.1", servers.get(j));
+                        transport.open();
+                        protocol = new TBinaryProtocol(transport);
+                        client = new Server.Client(protocol);
+
+                        client.ABORT();
+                        transport.close();
+                    }
+                    else {
+                        System.out.println("Aborted on server " + this.serverName);
+                        this.ft.abort();
+                    }
+                }
+                return false;
+            }
+        }
+
+        for (int j = 0; j < numServers; j++) {
+            if (j != serverName) {
+                transport = new TSocket("127.0.0.1", servers.get(j));
+                transport.open();
+                protocol = new TBinaryProtocol(transport);
+                client = new Server.Client(protocol);
+                client.COMMIT();
+                transport.close();
+            }
+            else {
+                System.out.println("Commited on server " + this.serverName);
+                this.ft.commit();
             }
         }
         return retorno;
@@ -380,6 +425,20 @@ public class ServerThrift implements Server.Iface {
 
         } else retorno = false;
         return retorno;
+    }
+
+    public boolean CAN_COMMIT() throws org.apache.thrift.TException{
+        return ft.canCommit();
+    }
+
+    public void COMMIT(){
+        ft.commit();
+        System.out.println("Commited on server " + this.serverName);
+    }
+
+    public void ABORT(){
+        ft.abort();
+        System.out.println("Aborted on server " + this.serverName);
     }
 
     public int getServerName() {
