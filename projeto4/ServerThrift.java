@@ -191,11 +191,11 @@ public class ServerThrift implements Server.Iface {
             for (int i = 0; i < files.length - 1; i++) {
                 // Build the path and send a message to the responsible server
                 filepath += ("/" + files[i]);
-                System.out.println(filepath);
+                //System.out.println(filepath);
                 hash = Math.abs(filepath.hashCode()) % this.numServers;
                 if (hash == this.serverName) {
                     if (getFile(filepath) == null) {
-                        return false;
+                        return addFile(filepath, "") != null;
                     }
                 }
                 else {
@@ -206,8 +206,9 @@ public class ServerThrift implements Server.Iface {
                     Server.Client client = new Server.Client(protocol);
                     // If the parent path doesn't exist then the file can't be added
                     if (client.GET(filepath).equals("FILE NOT FOUND\n")) {
+                        client.ADD(filepath, "");
                         transport.close();
-                        return false;
+                        return true;
                     }
                     transport.close();
                 }
@@ -215,7 +216,31 @@ public class ServerThrift implements Server.Iface {
             return addFile(path, data) != null;
         }
         else {
-            // If the server is not the responsible then sent to the correct one
+            // If the server is not the responsible then send to the correct one
+            String[] files = path.substring(1).split("/");
+            String filepath = "";
+            for (int i = 0; i < files.length - 1; i++) {
+                filepath += ("/" + files[i]);
+                hash = Math.abs(filepath.hashCode()) % this.numServers;
+                if (hash == this.serverName) {
+                    if (getFile(filepath) == null) {
+                        return addFile(filepath, "") != null;
+                    }
+                }
+                else {
+                    System.out.println("GET " + filepath + " sent to server "+ hash);
+                    TTransport transport = new TSocket("127.0.0.1", servers.get(hash));
+                    transport.open();
+                    TProtocol protocol = new TBinaryProtocol(transport);
+                    Server.Client client = new Server.Client(protocol);
+                    if (client.GET(filepath).equals("FILE NOT FOUND\n")) {
+                        client.ADD(filepath, "");
+                        transport.close();
+                        return true;
+                    }
+                    transport.close();
+                }
+            }
             System.out.println("ADD " + path + " sent to server " + hash);
             try {
                 TTransport transport = new TSocket("127.0.0.1", servers.get(hash));
@@ -335,7 +360,7 @@ public class ServerThrift implements Server.Iface {
             retorno =  removeFile(path);
 
         } else if(f == null){
-            System.out.println("DELETE_VERSION SENT TO "+ hash+" with path: "+path);
+            System.out.println("DELETE_VERSION SENT TO "+ hash +" with path: "+path);
 
             try {
                 TTransport transport;
@@ -351,7 +376,6 @@ public class ServerThrift implements Server.Iface {
             } catch (TException x) {
                 x.printStackTrace();
                 retorno = false;
-
             }
 
         } else retorno = false;

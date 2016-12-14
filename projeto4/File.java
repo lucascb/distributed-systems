@@ -24,7 +24,6 @@ public class File {
         return this.child.add(f);
     }
 
-
     public void addData(String s) {
     	this.modificationTime = String.valueOf(Instant.now().toEpochMilli());
         this.version++;

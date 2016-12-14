@@ -28,15 +28,16 @@ public class Client {
 
     private static void perform(Server.Client client)
     throws TException {
-        //System.out.println(client.ADD("/user", "Eduardo"));
-        //System.out.println(client.ADD("/user/age", "21 anos"));
+        System.out.println(client.ADD("/user", "Eduardo"));
+        System.out.println(client.ADD("/user/age", "21 anos"));
         //client.ADD("/user/age/a", "eduardo");
         System.out.println(client.ADD("/user/age/a/b", "teste"));
         //client.ADD("/user/age/b", "eduardo");
         //client.ADD("/user/age/b/c", "21 anos");
         //System.out.println(client.LIST("/user"));
-        //System.out.println(client.GET("/user"));
-        //System.out.println(client.GET("/user/age"));
+        System.out.println(client.GET("/user"));
+        System.out.println(client.GET("/user/age"));
+        System.out.println(client.GET("/user/age/a"));
         System.out.println(client.GET("/user/age/a/b"));
         //System.out.println(client.LIST("/user"));
     }
